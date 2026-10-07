@@ -4462,5 +4462,100 @@ document.querySelectorAll(".mrsm-logo-img").forEach(img => { img.src = MRSM_LOGO
   }
 })();
 </script>
+  <script>
+  // Pembolehubah untuk menyimpan sejarah borak / mesej
+  let chatHistory = [];
+
+  // Fungsi untuk buka / tutup panel AI bot
+  function toggleBotPanel() {
+    const panel = document.getElementById('botPanel');
+    if (panel) {
+      panel.classList.toggle('hidden');
+    }
+  }
+
+  // Fungsi untuk hantar mesej
+  async function sendBotMessage() {
+    const inputEl = document.getElementById('botInput');
+    const messagesContainer = document.getElementById('botMessages');
+    const userText = inputEl.value.trim();
+
+    if (!userText) return;
+
+    // 1. Paparkan mesej pengguna dalam ruang borak
+    appendMessage('user', userText);
+    inputEl.value = '';
+
+    // 2. Paparkan petunjuk "Sedang menaip..."
+    const loadingId = appendLoadingMessage();
+
+    try {
+      // 3. Panggil API AI (Contoh: Google Gemini API / OpenAI API / Backend API anda)
+      // Sila gantikan URL atau ganti dengan panggilan API backend anda
+      const response = await fetch('YOUR_API_ENDPOINT_HERE', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: userText,
+          history: chatHistory
+        })
+      });
+
+      const data = await response.json();
+      removeMessage(loadingId);
+
+      // 4. Paparkan jawapan AI
+      const botReply = data.reply || "Maaf, saya tidak dapat memproses permintaan anda buat masa ini.";
+      appendMessage('bot', botReply);
+
+      // Simpan sejarah borak
+      chatHistory.push({ role: 'user', text: userText });
+      chatHistory.push({ role: 'bot', text: botReply });
+
+    } catch (error) {
+      removeMessage(loadingId);
+      appendMessage('bot', 'Ralat sambungan. Sila cuba lagi kemudian.');
+      console.error('Bot Error:', error);
+    }
+  }
+
+  // Fungsi pembantu untuk menambah elemen mesej ke dalam borak
+  function appendMessage(sender, text) {
+    const container = document.getElementById('botMessages');
+    const msgDiv = document.createElement('div');
+    msgDiv.className = sender === 'user' 
+      ? 'text-right my-2' 
+      : 'text-left my-2';
+
+    const bubble = document.createElement('span');
+    bubble.className = sender === 'user'
+      ? 'inline-block bg-blue-600 text-white text-sm p-2 rounded-lg max-w-[80%] text-left'
+      : 'inline-block bg-slate-200 text-slate-800 text-sm p-2 rounded-lg max-w-[80%] text-left';
+    
+    bubble.innerText = text;
+    msgDiv.appendChild(bubble);
+    container.appendChild(msgDiv);
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function appendLoadingMessage() {
+    const container = document.getElementById('botMessages');
+    const id = 'loading-' + Date.now();
+    const msgDiv = document.createElement('div');
+    msgDiv.id = id;
+    msgDiv.className = 'text-left my-2';
+    msgDiv.innerHTML = '<span class="inline-block bg-slate-100 text-slate-500 text-xs p-2 rounded-lg italic">AI sedang menaip...</span>';
+    container.appendChild(msgDiv);
+    container.scrollTop = container.scrollHeight;
+    return id;
+  }
+
+  function removeMessage(id) {
+    const el = document.getElementById(id);
+    if (el) el.remove();
+  }
+</script>
 </body>
 </html>
